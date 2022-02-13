@@ -1,6 +1,7 @@
 package com.example.justview
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
@@ -165,13 +166,13 @@ class FullscreenActivity : AppCompatActivity() {
 
     override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
         if (event?.action == KeyEvent.ACTION_DOWN) {
-            if (event?.keyCode == KeyEvent.KEYCODE_BACK) {
+            if (event.keyCode == KeyEvent.KEYCODE_BACK) {
                 videoView.stopPlayback()
                 showChooseFileDialog()
                 return true
             }
-            if (event?.keyCode == KeyEvent.KEYCODE_SPACE) {
-                if (videoView.isPlaying()) {
+            if (event.keyCode == KeyEvent.KEYCODE_SPACE) {
+                if (videoView.isPlaying) {
                     videoView.pause()
                 } else {
                     videoView.resume()
@@ -181,5 +182,20 @@ class FullscreenActivity : AppCompatActivity() {
         }
 
         return super.dispatchKeyEvent(event)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (currentTrack != null) {
+            videoView.start()
+        }
+    }
+
+    override fun onStop() {
+        if (videoView.isPlaying) {
+            videoView.pause()
+        }
+
+        super.onStop()
     }
 }
