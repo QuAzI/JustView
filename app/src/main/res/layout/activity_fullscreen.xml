@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black_overlay"
+    android:theme="@style/ThemeOverlay.JustView.FullscreenContainer"
+    tools:context=".FullscreenActivity"
+    android:orientation="horizontal"
+    android:keepScreenOn="true"
+    android:layout_gravity="center"
+    android:gravity="center"
+
+    >
+
+    <VideoView
+        android:id="@+id/videoView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:background="@color/black_overlay"
+         />
+
+</LinearLayout>
