@@ -166,11 +166,11 @@ class FullscreenActivity : AppCompatActivity() {
 
     override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
         if (event?.action == KeyEvent.ACTION_DOWN) {
-            if (event.keyCode == KeyEvent.KEYCODE_BACK) {
-                videoView.stopPlayback()
-                showChooseFileDialog()
-                return true
-            }
+//            if (event.keyCode == KeyEvent.KEYCODE_BACK) {
+//                videoView.stopPlayback()
+//                showChooseFileDialog()
+//                return true
+//            }
             if (event.keyCode == KeyEvent.KEYCODE_SPACE) {
                 if (videoView.isPlaying) {
                     videoView.pause()
@@ -184,11 +184,16 @@ class FullscreenActivity : AppCompatActivity() {
         return super.dispatchKeyEvent(event)
     }
 
-    override fun onResume() {
-        super.onResume()
+    override fun onRestart() {
+        super.onRestart()
         if (currentTrack != null) {
             videoView.start()
         }
+    }
+
+    override fun onBackPressed() {
+        videoView.pause()
+        showChooseFileDialog()
     }
 
     override fun onStop() {
