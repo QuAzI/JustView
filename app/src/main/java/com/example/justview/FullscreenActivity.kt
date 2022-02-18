@@ -1,7 +1,6 @@
 package com.example.justview
 
 import android.Manifest
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
@@ -17,7 +16,6 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import java.io.File
-
 
 class FullscreenActivity : AppCompatActivity() {
     private lateinit var videoView: VideoView
@@ -40,21 +38,21 @@ class FullscreenActivity : AppCompatActivity() {
             @RequiresApi(Build.VERSION_CODES.M)
             override fun onSwipeLeft() {
                 super.onSwipeLeft()
-                nextTrack(currentTrack!!)
+                nextTrack(currentTrack)
             }
             @RequiresApi(Build.VERSION_CODES.M)
             override fun onSwipeRight() {
                 super.onSwipeRight()
-                prevTrack(currentTrack!!)
+                prevTrack(currentTrack)
             }
         })
 
         videoView.setOnCompletionListener {
-            nextTrack(currentTrack!!)
+            nextTrack(currentTrack)
         }
 
         videoView.setOnErrorListener(MediaPlayer.OnErrorListener { mp, what, extra ->
-            nextTrack(currentTrack!!)
+            nextTrack(currentTrack)
             false
         })
     }
@@ -113,23 +111,30 @@ class FullscreenActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun playPath(path: String) {
-        try {
-            Log.d("Play", path)
+        Log.d("Play", path)
+        currentTrack = path
+        currentPosition = 0
+        startPlayVideo()
+    }
 
-            val uri = Uri.fromFile(File(path))
-            videoView.setVideoURI(uri)
-
-            currentTrack = path
-            currentPosition = 0
-            resumeVideo()
-        } catch (ex: Exception) {
-            ex.printStackTrace()
+    private fun startPlayVideo() {
+        if (!currentTrack.isNullOrBlank()) {
+            try {
+                videoView.requestFocus()
+                val uri = Uri.fromFile(File(currentTrack!!))
+                videoView.setVideoURI(uri)
+                videoView.seekTo(currentPosition)
+                videoView.start()
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
-    private fun nextTrack(path: String) {
-        currentPosition = 0
+    private fun nextTrack(path: String?) {
+        if (path.isNullOrEmpty()) return
+
         val currentFile = File(path)
         val currentDir = currentFile.parent
         val files = getFiles(currentDir!!)
@@ -145,12 +150,13 @@ class FullscreenActivity : AppCompatActivity() {
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
-    private fun prevTrack(path: String) {
-        currentPosition = 0
+    private fun prevTrack(path: String?) {
+        if (path.isNullOrEmpty()) return
+
         val currentFile = File(path)
         val currentDir = currentFile.parent
         val files = getFiles(currentDir!!)
-        var index = files.indexOf(currentFile.name)!!
+        var index = files.indexOf(currentFile.name)
         index--
         if (index >= files.count()) {
             index = 0
@@ -166,11 +172,12 @@ class FullscreenActivity : AppCompatActivity() {
         val files: Array<File> = directory.listFiles()
         val result = arrayOfNulls<String>(files.size)
         for (i in files.indices) {
-            result[i] = files[i].getName()
+            result[i] = files[i].name
         }
         return result
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
         if (event?.action == KeyEvent.ACTION_DOWN) {
 //            if (event.keyCode == KeyEvent.KEYCODE_BACK) {
@@ -180,10 +187,22 @@ class FullscreenActivity : AppCompatActivity() {
 //            }
             if (event.keyCode == KeyEvent.KEYCODE_SPACE) {
                 if (videoView.isPlaying) {
-                    videoView.pause()
+                    pauseVideo()
                 } else {
-                    videoView.start()
+                    startPlayVideo()
                 }
+                return true
+            }
+            if (event.keyCode == KeyEvent.KEYCODE_MEDIA_NEXT ||
+                event.keyCode == KeyEvent.KEYCODE_NAVIGATE_NEXT ||
+                event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                nextTrack(currentTrack)
+                return true
+            }
+            if (event.keyCode == KeyEvent.KEYCODE_MEDIA_PREVIOUS ||
+                event.keyCode == KeyEvent.KEYCODE_NAVIGATE_PREVIOUS ||
+                event.keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                prevTrack(currentTrack)
                 return true
             }
         }
@@ -193,15 +212,7 @@ class FullscreenActivity : AppCompatActivity() {
 
     override fun onRestart() {
         super.onRestart()
-        resumeVideo()
-    }
-
-    private fun resumeVideo() {
-        if (currentTrack != null) {
-            videoView.requestFocus()
-            videoView.seekTo(currentPosition)
-            videoView.start()
-        }
+        startPlayVideo()
     }
 
     override fun onBackPressed() {
