@@ -22,7 +22,9 @@ import java.io.File
 class FullscreenActivity : AppCompatActivity() {
     private lateinit var videoView: VideoView
     private var currentTrack: String? = null
+    private var currentPosition: Int = 0
 
+    @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -45,6 +47,15 @@ class FullscreenActivity : AppCompatActivity() {
                 super.onSwipeRight()
                 prevTrack(currentTrack!!)
             }
+        })
+
+        videoView.setOnCompletionListener {
+            nextTrack(currentTrack!!)
+        }
+
+        videoView.setOnErrorListener(MediaPlayer.OnErrorListener { mp, what, extra ->
+            nextTrack(currentTrack!!)
+            false
         })
     }
 
@@ -104,19 +115,13 @@ class FullscreenActivity : AppCompatActivity() {
     private fun playPath(path: String) {
         try {
             Log.d("Play", path)
-            currentTrack = path
+
             val uri = Uri.fromFile(File(path))
             videoView.setVideoURI(uri)
 
-            videoView.requestFocus()
-            videoView.start()
-
-            videoView.setOnCompletionListener { nextTrack(path) }
-
-            videoView.setOnErrorListener(MediaPlayer.OnErrorListener { mp, what, extra ->
-                nextTrack(path)
-                false
-            })
+            currentTrack = path
+            currentPosition = 0
+            resumeVideo()
         } catch (ex: Exception) {
             ex.printStackTrace()
         }
@@ -124,10 +129,11 @@ class FullscreenActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun nextTrack(path: String) {
+        currentPosition = 0
         val currentFile = File(path)
         val currentDir = currentFile.parent
         val files = getFiles(currentDir!!)
-        var index = files?.indexOf(currentFile.name)!!
+        var index = files.indexOf(currentFile.name)
         index++
         if (index >= files.count()) {
             index = 0
@@ -140,10 +146,11 @@ class FullscreenActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun prevTrack(path: String) {
+        currentPosition = 0
         val currentFile = File(path)
         val currentDir = currentFile.parent
         val files = getFiles(currentDir!!)
-        var index = files?.indexOf(currentFile.name)!!
+        var index = files.indexOf(currentFile.name)!!
         index--
         if (index >= files.count()) {
             index = 0
@@ -154,7 +161,7 @@ class FullscreenActivity : AppCompatActivity() {
         playPath(currentDir + "/" + files[index]!!)
     }
 
-    private fun getFiles(directoryPath: String): Array<String?>? {
+    private fun getFiles(directoryPath: String): Array<String?> {
         val directory = File(directoryPath)
         val files: Array<File> = directory.listFiles()
         val result = arrayOfNulls<String>(files.size)
@@ -175,7 +182,7 @@ class FullscreenActivity : AppCompatActivity() {
                 if (videoView.isPlaying) {
                     videoView.pause()
                 } else {
-                    videoView.resume()
+                    videoView.start()
                 }
                 return true
             }
@@ -186,21 +193,31 @@ class FullscreenActivity : AppCompatActivity() {
 
     override fun onRestart() {
         super.onRestart()
+        resumeVideo()
+    }
+
+    private fun resumeVideo() {
         if (currentTrack != null) {
+            videoView.requestFocus()
+            videoView.seekTo(currentPosition)
             videoView.start()
         }
     }
 
     override fun onBackPressed() {
-        videoView.pause()
+        pauseVideo()
         showChooseFileDialog()
     }
 
     override fun onStop() {
+        pauseVideo()
+        super.onStop()
+    }
+
+    private fun pauseVideo() {
         if (videoView.isPlaying) {
+            currentPosition = videoView.currentPosition
             videoView.pause()
         }
-
-        super.onStop()
     }
 }
