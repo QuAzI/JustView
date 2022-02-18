@@ -231,4 +231,10 @@ class FullscreenActivity : AppCompatActivity() {
             videoView.pause()
         }
     }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        pauseVideo()
+        showChooseFileDialog()
+    }
 }
