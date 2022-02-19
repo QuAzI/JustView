@@ -44,3 +44,9 @@ Settings -> Application -> Unknown sources (Allow installation of non-Market app
 ```
 
 then copy APK to device and install
+
+
+## Troubleshooting
+
+Standard VideoView used. Codesc and all decoding issues depends on device.
+Please check https://developer.android.com/guide/topics/media/media-formats

@@ -42,10 +42,8 @@ class FullscreenActivity : AppCompatActivity() {
 
         videoView = findViewById<VideoView>(R.id.videoView)
 
-//        val mediaController = MediaController(this)
-//        mediaController.setAnchorView(videoView)
-//        videoView.setMediaController(mediaController)
-//        mediaController.hide()
+        val mediaController = MediaController(this)
+        mediaController.setAnchorView(videoView)
 
         videoView.setOnTouchListener(object : OnSwipeTouchListener(this) {
             @RequiresApi(Build.VERSION_CODES.M)
@@ -53,6 +51,7 @@ class FullscreenActivity : AppCompatActivity() {
                 super.onSwipeLeft()
                 nextTrack(currentTrack)
             }
+
             @RequiresApi(Build.VERSION_CODES.M)
             override fun onSwipeRight() {
                 super.onSwipeRight()
@@ -62,17 +61,16 @@ class FullscreenActivity : AppCompatActivity() {
             override fun onClick() {
                 Log.i("action", "onClick")
                 if (!videoView.isPlaying) {
-                    startPlayVideo()
+                    videoView.start()
                 }
 
-//                if (mediaController.isShowing) {
-//                    mediaController.hide()
-//                }
+                Log.i("action", "onClick: showing ${mediaController.isShowing}")
+                videoView.setMediaController(null)
             }
 
             override fun onLongClick() {
                 Log.i("action", "onLongClick")
-//                mediaController.show()
+                videoView.setMediaController(mediaController)
             }
         })
 
@@ -166,6 +164,7 @@ class FullscreenActivity : AppCompatActivity() {
                 }
                 videoView.start()
                 lastState = STATE_PLAY
+                videoView.setMediaController(null)
             } catch (ex: Exception) {
                 ex.printStackTrace()
             }
