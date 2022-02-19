@@ -11,6 +11,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.JustView"
         android:testOnly="false"
+        android:hardwareAccelerated="true"
         >
         <activity
             android:name=".FullscreenActivity"
@@ -18,8 +19,8 @@
             android:theme="@style/Theme.JustView.Fullscreen"
             android:exported="true"
             android:launchMode="singleTask"
-            android:persistableMode="persistNever"
             android:screenOrientation="sensorLandscape"
+            android:hardwareAccelerated="true"
             >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
