@@ -15,6 +15,7 @@ Swipe to play next/prev file
 
 If current file finished next file will be played automatically
 
+Media controls show on long click: pause, rewind
 
 ## Developed and tested for
 
@@ -25,7 +26,7 @@ Lenovo TAB 2 A10-70F
 
 ## Installation
 
-### from Desktop
+### Installation from Desktop
 
 Enable USB debug
 
@@ -35,7 +36,7 @@ adb -s 0123456789ABCDEF install JustView-v1.0.0.apk
 ```
 
 
-### from Android device
+### Installation from Android device
 
 Enable unsigned apps installation
 
@@ -49,4 +50,5 @@ then copy APK to device and install
 ## Troubleshooting
 
 Standard VideoView used. Codesc and all decoding issues depends on device.
+
 Please check https://developer.android.com/guide/topics/media/media-formats
