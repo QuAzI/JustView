@@ -8,19 +8,20 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.util.Log
 import android.view.KeyEvent
 import android.view.Window
 import android.view.WindowManager
+import android.webkit.MimeTypeMap
 import android.widget.MediaController
 import android.widget.VideoView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import java.io.File
+import java.io.FileFilter
 
 class FullscreenActivity : AppCompatActivity() {
     private lateinit var videoView: VideoView
@@ -241,15 +242,17 @@ class FullscreenActivity : AppCompatActivity() {
         val currentFile = File(path)
         val currentDir = currentFile.parent
         val files = getFiles(currentDir!!)
-        var index = files.indexOf(currentFile.name)
-        index++
-        if (index >= files.count()) {
-            index = 0
-        } else if (index < 0) {
-            index = files.count() - 1
-        }
+        if (files.isNotEmpty()) {
+            var index = files.indexOf(currentFile.name)
+            index++
+            if (index >= files.count()) {
+                index = 0
+            } else if (index < 0) {
+                index = files.count() - 1
+            }
 
-        playPath(currentDir + "/" + files[index]!!)
+            playPath(currentDir + "/" + files[index]!!)
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -273,7 +276,14 @@ class FullscreenActivity : AppCompatActivity() {
 
     private fun getFiles(directoryPath: String): Array<String?> {
         val directory = File(directoryPath)
-        val files = directory.listFiles()
+        val files = directory.listFiles(FileFilter { file ->
+            val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.extension)
+            if (mimeType != null) {
+                return@FileFilter mimeType.startsWith("video/")
+            }
+
+            return@FileFilter false;
+        })
         if (files != null) {
             val result = arrayOfNulls<String>(files.size)
             for (i in files.indices) {
