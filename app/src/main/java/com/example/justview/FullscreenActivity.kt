@@ -3,13 +3,12 @@ package com.example.justview
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.MediaCodecList
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.provider.DocumentsContract
-import android.provider.MediaStore
 import android.util.Log
 import android.view.KeyEvent
 import android.view.Window
@@ -22,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import java.io.File
 import java.io.FileFilter
+
 
 class FullscreenActivity : AppCompatActivity() {
     private lateinit var videoView: VideoView
@@ -128,64 +128,23 @@ class FullscreenActivity : AppCompatActivity() {
         Log.i("action", "showChooseFileDialog")
         pauseVideo()
 
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT, MediaStore.Video.Media.EXTERNAL_CONTENT_URI).apply {
-//            addCategory(Intent.CATEGORY_APP_GALLERY)
+        val uri = Uri.parse(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).path)
 
-//            action = Intent.ACTION_GET_CONTENT  or ACTION_OPEN_DOCUMENT or PICK_DATA (for sams)
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT, uri).apply {
+            data = uri
             type = "video/*"
-//            setData(Uri.fromFile(File(Environment.DIRECTORY_MOVIES)))
-            //putExtra(Intent.EXTRA_FROM_STORAGE, textMessage)
-
-            // Update with additional mime types here using a String[].
-            //putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
 
             // Only pick openable and local files. Theoretically we could pull files from google drive
             // or other applications that have networked files, but that's unnecessary for this example.
             addCategory(Intent.CATEGORY_OPENABLE)
             putExtra(Intent.EXTRA_LOCAL_ONLY, true)
 
-            if (lastState == STATE_STOP) {
-                // EXTRA_INITIAL_URI only supports Android 8 and above
-                val uri = Uri.parse("content://com.android.externalstorage.documents/document/primary:Movies")
-                putExtra(DocumentsContract.EXTRA_INITIAL_URI, uri);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                putExtra(DocumentsContract.EXTRA_INITIAL_URI, uri)
             }
-
-//            putExtra(DocumentsContract.EXTRA_INITIAL_URI, Uri.fromFile(File(Environment.DIRECTORY_MOVIES)))
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val mimeTypes = getSupportedMediaFiles()
-//            intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
-            Log.i("decoder", "All mime types: ${mimeTypes.joinToString()}")
         }
 
         startActivityForResult(Intent.createChooser(intent, "Select a file"), REQUEST_GET_FILE)
-    }
-
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    fun getSupportedMediaFiles(): Array<String> {
-        val supportedDecoders = arrayListOf<String>()
-
-        val mediaCodecList = MediaCodecList(MediaCodecList.REGULAR_CODECS)
-        for (codecInfo in mediaCodecList.codecInfos) {
-            if (codecInfo.isEncoder) {
-                continue
-            }
-
-            for (mime in codecInfo.supportedTypes) {
-                if (!supportedDecoders.contains(mime)) {
-                    supportedDecoders.add(mime)
-
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        Log.i("decoder", "${codecInfo.name}: ${codecInfo.supportedTypes}, hw: ${codecInfo.isHardwareAccelerated} vendor: ${codecInfo.isVendor} ")
-                    } else {
-                        Log.i("decoder", "${codecInfo.name}: ${codecInfo.supportedTypes}")
-                    }
-                }
-            }
-        }
-
-        return supportedDecoders.toTypedArray()
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
