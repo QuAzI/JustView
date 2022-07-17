@@ -32,7 +32,7 @@ Enable USB debug
 
 ```
 adb devices -l
-adb -s 0123456789ABCDEF install JustView-v1.0.5.apk
+adb -s 0123456789ABCDEF install -r ./app/build/intermediates/apk/debug/app-debug.apk
 ```
 
 

@@ -8,6 +8,8 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.util.Log
 import android.view.KeyEvent
@@ -125,18 +127,37 @@ class FullscreenActivity : AppCompatActivity() {
         Log.i("action", "showChooseFileDialog")
         pauseVideo()
 
-        val intent = Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
-            .setType("video/*")
-            .setAction(Intent.ACTION_GET_CONTENT)
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT, MediaStore.Video.Media.EXTERNAL_CONTENT_URI).apply {
+//            addCategory(Intent.CATEGORY_APP_GALLERY)
+
+//            action = Intent.ACTION_GET_CONTENT  or ACTION_OPEN_DOCUMENT or PICK_DATA (for sams)
+            type = "video/*"
+//            setData(Uri.fromFile(File(Environment.DIRECTORY_MOVIES)))
+            //putExtra(Intent.EXTRA_FROM_STORAGE, textMessage)
+
+            // Update with additional mime types here using a String[].
+            //putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+
+            // Only pick openable and local files. Theoretically we could pull files from google drive
+            // or other applications that have networked files, but that's unnecessary for this example.
+            addCategory(Intent.CATEGORY_OPENABLE)
+            putExtra(Intent.EXTRA_LOCAL_ONLY, true)
+
+            if (lastState == STATE_STOP) {
+                // EXTRA_INITIAL_URI only supports Android 8 and above
+                val uri = Uri.parse("content://com.android.externalstorage.documents/document/primary:Movies")
+                putExtra(DocumentsContract.EXTRA_INITIAL_URI, uri);
+            }
+
+//            putExtra(DocumentsContract.EXTRA_INITIAL_URI, Uri.fromFile(File(Environment.DIRECTORY_MOVIES)))
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             val mimeTypes = getSupportedMediaFiles()
-
 //            intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
             Log.i("decoder", "All mime types: ${mimeTypes.joinToString()}")
         }
 
-        //startActivityForResult(Intent.createChooser(intent, "Select a file"), REQUEST_GET_FILE)
         startActivityForResult(Intent.createChooser(intent, "Select a file"), REQUEST_GET_FILE)
     }
 
@@ -322,6 +343,7 @@ class FullscreenActivity : AppCompatActivity() {
         Log.i("action", "stopPlayVideo")
         lastState = STATE_STOP
         pauseVideo()
+        videoView.stopPlayback()
     }
 
     override fun onStop() {
