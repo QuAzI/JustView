@@ -3,12 +3,16 @@ package com.example.justview
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.MediaCodecList
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
-import android.view.*
+import android.view.KeyEvent
+import android.view.Window
+import android.view.WindowManager
 import android.widget.MediaController
 import android.widget.VideoView
 import androidx.annotation.RequiresApi
@@ -33,12 +37,12 @@ class FullscreenActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        requestWindowFeature(Window.FEATURE_NO_TITLE)
         window.setFlags(
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
-            WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            WindowManager.LayoutParams.FLAG_FULLSCREEN)
         setContentView(R.layout.activity_fullscreen)
-        supportActionBar?.hide();
+        supportActionBar?.hide()
 
         videoView = findViewById<VideoView>(R.id.videoView)
 
@@ -121,11 +125,45 @@ class FullscreenActivity : AppCompatActivity() {
         Log.i("action", "showChooseFileDialog")
         pauseVideo()
 
-        val intent = Intent()
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
             .setType("video/*")
             .setAction(Intent.ACTION_GET_CONTENT)
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            val mimeTypes = getSupportedMediaFiles()
+
+//            intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
+            Log.i("decoder", "All mime types: ${mimeTypes.joinToString()}")
+        }
+
+        //startActivityForResult(Intent.createChooser(intent, "Select a file"), REQUEST_GET_FILE)
         startActivityForResult(Intent.createChooser(intent, "Select a file"), REQUEST_GET_FILE)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    fun getSupportedMediaFiles(): Array<String> {
+        val supportedDecoders = arrayListOf<String>()
+
+        val mediaCodecList = MediaCodecList(MediaCodecList.REGULAR_CODECS)
+        for (codecInfo in mediaCodecList.codecInfos) {
+            if (codecInfo.isEncoder) {
+                continue
+            }
+
+            for (mime in codecInfo.supportedTypes) {
+                if (!supportedDecoders.contains(mime)) {
+                    supportedDecoders.add(mime)
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        Log.i("decoder", "${codecInfo.name}: ${codecInfo.supportedTypes}, hw: ${codecInfo.isHardwareAccelerated} vendor: ${codecInfo.isVendor} ")
+                    } else {
+                        Log.i("decoder", "${codecInfo.name}: ${codecInfo.supportedTypes}")
+                    }
+                }
+            }
+        }
+
+        return supportedDecoders.toTypedArray()
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -147,6 +185,7 @@ class FullscreenActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.M)
     private fun playPath(path: String) {
         Log.i("action", "Play: $path")
+        stopPlayVideo()
         currentTrack = path
         currentPosition = 0
         startPlayVideo()
@@ -170,7 +209,7 @@ class FullscreenActivity : AppCompatActivity() {
             }
         }
 
-        supportActionBar?.hide();
+        supportActionBar?.hide()
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -213,12 +252,16 @@ class FullscreenActivity : AppCompatActivity() {
 
     private fun getFiles(directoryPath: String): Array<String?> {
         val directory = File(directoryPath)
-        val files: Array<File> = directory.listFiles()
-        val result = arrayOfNulls<String>(files.size)
-        for (i in files.indices) {
-            result[i] = files[i].name
+        val files = directory.listFiles()
+        if (files != null) {
+            val result = arrayOfNulls<String>(files.size)
+            for (i in files.indices) {
+                result[i] = files[i].name
+            }
+
+            return result
         }
-        return result
+        return arrayOfNulls(0)
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
