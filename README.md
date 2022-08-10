@@ -19,10 +19,11 @@ Media controls show on long click: pause, rewind
 
 ## Developed and tested for
 
-Lenovo TAB 2 A10-70F
+Lenovo TAB 2 A10-70F [Android 6.0 (API level 23)](https://developer.android.com/studio/releases/platforms#6.0)
 
-[Android 6.0 (API level 23)](https://developer.android.com/studio/releases/platforms#6.0)
+Lenovo Tab M10 HD 2nd Gen TB-X306X - [Android 11 (API level 30)](https://developer.android.com/studio/releases/platforms#11)
 
+Samsung Note10+ - [Android 12 (API level 31)](https://developer.android.com/studio/releases/platforms#12)
 
 ## Installation
 
@@ -35,6 +36,7 @@ adb devices -l
 adb -s 0123456789ABCDEF install -r ./app/build/intermediates/apk/debug/app-debug.apk
 ```
 
+or use file manager to install unsigned APK right from filesystem
 
 ### Installation from Android device
 
