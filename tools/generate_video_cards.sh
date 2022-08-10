@@ -12,22 +12,34 @@ do
   extension="${filename##*.}"
   filename="${filename%.*}"
   
-  mp3=$filename.mp3
-  audio=$mp3
-  if [ ! -f "$audio" ]; then
-    audio=$filename.wav
-    if [ ! -f "$audio" ]; then
-      echo Audio generation: $audio
-      # espeak-ng -v ru -s 100 -w "$audio" "$filename"
-      echo $filename | text2wave -eval '(voice_msu_ru_nsh_clunits)' -o "$audio"
+  destfile="out/$filename.mp4"
+  if [ ! -f "$destfile" ]; then
+      mp3=$filename.mp3
+      audio=$mp3
+      if [ ! -f "$audio" ]; then
+        audio=$filename.wav
+        if [ ! -f "$audio" ]; then
+          echo Audio generation: $audio
+          
+          # sudo apt install espeak-ng
+          #espeak-ng -v ru -s 100 -w "$audio" "$filename"
+          
+          # sudo apt install festival festvox-ru
+          #echo $filename | text2wave -eval '(voice_msu_ru_nsh_clunits)' -o "$audio"
+          
+          # sudo pip3 install gTTS
+          /usr/local/bin/gtts-cli "$filename" --output "$audio" -s -l ru --nocheck
+          
+          # RHVoice https://github.com/RHVoice/RHVoice
+          #echo $filename | RHVoice-test -p pavel -o "$audio" -r 80
+        fi
+      fi
+      echo Audio: $audio
+      
+      if [[ "$audio" == "$mp3" ]]; then
+        ffmpeg -loop 1 -y -i "$fullfile" -itsoffset 1 -i "$audio" -map 0:v -map 1:a -c:v libx264 -preset veryslow -tune stillimage -vf scale=-1:720 -c:a copy -t 5 "$destfile"
+      else
+        ffmpeg -loop 1 -y -i "$fullfile" -itsoffset 1 -i "$audio" -map 0:v -map 1:a -c:v libx264 -preset veryslow -tune stillimage -vf scale=-1:720 -c:a aac -b:a 128k -filter:a "atempo=0.9" -t 5 "$destfile"
+      fi
     fi
-  fi
-  echo Audio: $audio
-  
-  if [[ "$audio" == "$mp3" ]]; then
-    # ffmpeg -y -i image.png -i audio.mp3 -c:a copy result.mp4
-    ffmpeg -loop 1 -y -i "$fullfile" -itsoffset 1 -i "$audio" -map 0:v -map 1:a -c:v libx264 -preset veryslow -tune stillimage -c:a copy -t 5 out/"$filename.mp4"
-  else
-    ffmpeg -loop 1 -y -i "$fullfile" -itsoffset 1 -i "$audio" -map 0:v -map 1:a -c:v libx264 -preset veryslow -tune stillimage -c:a aac -b:a 128k -filter:a "atempo=0.8" -t 5 "out/$filename.mp4"
-  fi
 done
