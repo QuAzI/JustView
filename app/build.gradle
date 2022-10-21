@@ -4,13 +4,13 @@ plugins {
 }
 
 android {
-    compileSdk 30
+    compileSdk 31
     buildToolsVersion '32.0.0'
 
     defaultConfig {
         applicationId "com.example.justview"
         minSdkVersion 23
-        targetSdkVersion 30
+        targetSdkVersion 31
         versionCode 1
         versionName "1.0"
 
@@ -24,12 +24,13 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '11'
     }
+    namespace 'com.example.justview'
 }
 
 dependencies {
