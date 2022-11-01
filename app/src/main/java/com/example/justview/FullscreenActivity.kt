@@ -28,8 +28,11 @@ class FullscreenActivity : AppCompatActivity() {
     private var currentTrack: String? = null
     private var currentPosition: Int = 0
 
+    private var flippingDirection: Int = 1
+
     private val STATE_STOP : Int = 0
     private val STATE_PLAY : Int = 1
+
     private var lastState: Int = STATE_STOP
         set(value) {
             Log.i("action", "lastState = $value")
@@ -86,7 +89,12 @@ class FullscreenActivity : AppCompatActivity() {
         }
 
         videoView.setOnErrorListener(MediaPlayer.OnErrorListener { mp, what, extra ->
-            nextTrack(currentTrack)
+            if (flippingDirection >= 0) {
+                nextTrack(currentTrack)
+            } else {
+                prevTrack(currentTrack)
+            }
+            
             false
         })
     }
@@ -197,6 +205,7 @@ class FullscreenActivity : AppCompatActivity() {
     private fun nextTrack(path: String?) {
         Log.i("action", "nextTrack $path")
         if (path.isNullOrEmpty()) return
+        flippingDirection = 1
 
         val currentFile = File(path)
         val currentDir = currentFile.parent
@@ -218,6 +227,7 @@ class FullscreenActivity : AppCompatActivity() {
     private fun prevTrack(path: String?) {
         Log.i("action", "prevTrack $path")
         if (path.isNullOrEmpty()) return
+        flippingDirection = -1
 
         val currentFile = File(path)
         val currentDir = currentFile.parent
