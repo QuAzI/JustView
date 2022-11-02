@@ -6,6 +6,8 @@ Without any unsafe functionality and extremally simple. You can't delete/edit/sh
 
 Even toddlers can use it safely.
 
+Also it is good hint to download some videos even from YouTube to local cache because now official client regularly freezes on old tablets like Lenovo TAB 2 A10-70F 
+
 
 ## Usage
 
@@ -17,6 +19,7 @@ If current file finished next file will be played automatically
 
 Media controls show on long click: pause, rewind
 
+
 ## Developed and tested for
 
 Lenovo TAB 2 A10-70F [Android 6.0 (API level 23)](https://developer.android.com/studio/releases/platforms#6.0)
@@ -24,6 +27,7 @@ Lenovo TAB 2 A10-70F [Android 6.0 (API level 23)](https://developer.android.com/
 Lenovo Tab M10 HD 2nd Gen TB-X306X - [Android 11 (API level 30)](https://developer.android.com/studio/releases/platforms#11)
 
 Samsung Note10+ - [Android 12 (API level 31)](https://developer.android.com/studio/releases/platforms#12)
+
 
 ## Installation
 
@@ -66,5 +70,18 @@ Looks optimal for me: res:1920,fps codec:h264
 
 Encode to h264 AVC
 ```
-ffmpeg -i "%1" -c:v libx264 -preset veryslow -c:a aac "%1.x264.mp4"
+ffmpeg -loop 1 -y -i "$fullfile" -itsoffset 1 -i "$audio" -map 0:v -map 1:a -c:v libx264 -preset veryslow -tune stillimage -vf scale=-2:720 -pix_fmt yuv420p -c:a aac -b:a 128k -filter:a "volume=2.0,atempo=1.2" -t 5 "$destfile"
 ```
+where
+- `-vf scale=-2:720` fix images scale error
+- `-pix_fmt yuv420p` fix issues with some video files for old Androids
+
+
+## Known issues
+
+No preview for directories on new Android versions. Only for files. It is not very comfortable for toddlers while they can't read.
+
+
+# Tools for toddlers
+
+Please check `tools/VideoCardsGenerator` to prepare some video lessons for toddlers
