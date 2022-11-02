@@ -39,9 +39,9 @@ do
       echo Audio: $audio
       
       if [[ "$audio" == "$mp3" ]]; then
-        ffmpeg -loop 1 -y -i "$fullfile" -i "$audio" -c:v libx264 -preset veryslow -tune stillimage -vf scale=-2:720 -c:a copy -t 5 "$destfile"
+        ffmpeg -loop 1 -y -i "$fullfile" -i "$audio" -c:v libx264 -preset veryslow -tune stillimage -vf scale=-2:720 -pix_fmt yuv420p -c:a copy -t 5 "$destfile"
       else
-        ffmpeg -loop 1 -y -i "$fullfile" -itsoffset 1 -i "$audio" -map 0:v -map 1:a -c:v libx264 -preset veryslow -tune stillimage -vf scale=-2:720 -c:a aac -b:a 128k -filter:a "volume=2.0,atempo=1.2" -t 5 "$destfile"
+        ffmpeg -loop 1 -y -i "$fullfile" -itsoffset 1 -i "$audio" -map 0:v -map 1:a -c:v libx264 -preset veryslow -tune stillimage -vf scale=-2:720 -pix_fmt yuv420p -c:a aac -b:a 128k -filter:a "volume=2.0,atempo=1.2" -t 5 "$destfile"
       fi
     fi
 done
