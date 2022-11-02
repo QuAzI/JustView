@@ -85,18 +85,21 @@ class FullscreenActivity : AppCompatActivity() {
         })
 
         videoView.setOnCompletionListener {
-            nextTrack(currentTrack)
+            switchToNextVideo()
         }
 
         videoView.setOnErrorListener(MediaPlayer.OnErrorListener { mp, what, extra ->
-            if (flippingDirection >= 0) {
-                nextTrack(currentTrack)
-            } else {
-                prevTrack(currentTrack)
-            }
-            
+            switchToNextVideo()
             false
         })
+    }
+
+    private fun switchToNextVideo() {
+        if (flippingDirection >= 0) {
+            nextTrack(currentTrack)
+        } else {
+            prevTrack(currentTrack)
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
