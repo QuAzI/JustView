@@ -59,13 +59,17 @@ class FullscreenActivity : AppCompatActivity() {
             @RequiresApi(Build.VERSION_CODES.M)
             override fun onSwipeLeft() {
                 super.onSwipeLeft()
-                nextTrack(currentTrack)
+                if (!nextTrack(currentTrack)) {
+                    chooseFile()
+                }
             }
 
             @RequiresApi(Build.VERSION_CODES.M)
             override fun onSwipeRight() {
                 super.onSwipeRight()
-                prevTrack(currentTrack)
+                if (!prevTrack(currentTrack)) {
+                    chooseFile()
+                }
             }
 
             override fun onClick() {
@@ -85,21 +89,23 @@ class FullscreenActivity : AppCompatActivity() {
         })
 
         videoView.setOnCompletionListener {
-            switchToNextVideo()
+            switchToNextTrackInTheDirection()
         }
 
         videoView.setOnErrorListener(MediaPlayer.OnErrorListener { mp, what, extra ->
             Log.i("action", "File playback error: ${this.currentTrack}")
-            switchToNextVideo()
+            if (!switchToNextTrackInTheDirection()) {
+                chooseFile()
+            }
             true
         })
     }
 
-    private fun switchToNextVideo() {
+    private fun switchToNextTrackInTheDirection(): Boolean {
         if (flippingDirection >= 0) {
-            nextTrack(currentTrack)
+            return nextTrack(currentTrack)
         } else {
-            prevTrack(currentTrack)
+            return prevTrack(currentTrack)
         }
     }
 
@@ -147,7 +153,7 @@ class FullscreenActivity : AppCompatActivity() {
             type = "video/*"
 
             // Only pick openable and local files. Theoretically we could pull files from google drive
-            // or other applications that have networked files, but that's unnecessary for this example.
+            // or other applications that have networked files, but that's unnecessary for this case.
             addCategory(Intent.CATEGORY_OPENABLE)
             putExtra(Intent.EXTRA_LOCAL_ONLY, true)
 
@@ -206,17 +212,27 @@ class FullscreenActivity : AppCompatActivity() {
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
-    private fun nextTrack(path: String?) {
+    private fun nextTrack(path: String?): Boolean {
         Log.i("action", "nextTrack $path")
-        if (path.isNullOrEmpty()) return
-        flippingDirection = 1
+        return playNextTrackInTheDirection(path, 1)
+    }
 
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun prevTrack(path: String?): Boolean {
+        Log.i("action", "prevTrack $path")
+        return playNextTrackInTheDirection(path, -1)
+    }
+
+    private fun playNextTrackInTheDirection(path: String?, direction: Int): Boolean {
+        if (path.isNullOrEmpty()) return false
+
+        this.flippingDirection = direction
         val currentFile = File(path)
         val currentDir = currentFile.parent
         val files = getFiles(currentDir!!)
-        if (files.isNotEmpty()) {
+        if (files.size > 1) {
             var index = files.indexOf(currentFile.name)
-            index++
+            index += flippingDirection
             if (index >= files.count()) {
                 index = 0
             } else if (index < 0) {
@@ -224,27 +240,10 @@ class FullscreenActivity : AppCompatActivity() {
             }
 
             playPath(currentDir + "/" + files[index]!!)
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.M)
-    private fun prevTrack(path: String?) {
-        Log.i("action", "prevTrack $path")
-        if (path.isNullOrEmpty()) return
-        flippingDirection = -1
-
-        val currentFile = File(path)
-        val currentDir = currentFile.parent
-        val files = getFiles(currentDir!!)
-        var index = files.indexOf(currentFile.name)
-        index--
-        if (index >= files.count()) {
-            index = 0
-        } else if (index < 0) {
-            index = files.count() - 1
+            return true
         }
 
-        playPath(currentDir + "/" + files[index]!!)
+        return false
     }
 
     private fun getFiles(directoryPath: String): Array<String?> {
@@ -287,13 +286,17 @@ class FullscreenActivity : AppCompatActivity() {
             if (event.keyCode == KeyEvent.KEYCODE_MEDIA_NEXT ||
                 event.keyCode == KeyEvent.KEYCODE_NAVIGATE_NEXT ||
                 event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-                nextTrack(currentTrack)
+                if (!nextTrack(currentTrack)) {
+                    chooseFile()
+                }
                 return true
             }
             if (event.keyCode == KeyEvent.KEYCODE_MEDIA_PREVIOUS ||
                 event.keyCode == KeyEvent.KEYCODE_NAVIGATE_PREVIOUS ||
                 event.keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-                prevTrack(currentTrack)
+                if (!prevTrack(currentTrack)) {
+                    chooseFile()
+                }
                 return true
             }
         }
