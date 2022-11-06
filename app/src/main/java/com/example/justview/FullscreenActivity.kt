@@ -89,8 +89,9 @@ class FullscreenActivity : AppCompatActivity() {
         }
 
         videoView.setOnErrorListener(MediaPlayer.OnErrorListener { mp, what, extra ->
+            Log.i("action", "File playback error: ${this.currentTrack}")
             switchToNextVideo()
-            false
+            true
         })
     }
 
