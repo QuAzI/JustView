@@ -148,13 +148,21 @@ class FullscreenActivity : AppCompatActivity() {
 
     val REQUEST_GET_FILE = 111
 
+    private var chooseFileIntent: Intent? = null
+
     private fun chooseFile() {
         Log.i("action", "showChooseFileDialog")
+
+        if (chooseFileIntent != null) {
+            Log.i("action", "showChooseFileDialog already opened")
+            return
+        }
+
         pauseVideo()
 
         val uri = Uri.parse(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).path)
 
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT, uri).apply {
+        chooseFileIntent = Intent(Intent.ACTION_OPEN_DOCUMENT, uri).apply {
             data = uri
             type = "video/*"
 
@@ -168,7 +176,7 @@ class FullscreenActivity : AppCompatActivity() {
             }
         }
 
-        startActivityForResult(Intent.createChooser(intent, "Select a file"), REQUEST_GET_FILE)
+        startActivityForResult(Intent.createChooser(chooseFileIntent, "Select a file"), REQUEST_GET_FILE)
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -176,6 +184,8 @@ class FullscreenActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == REQUEST_GET_FILE) {
+            chooseFileIntent = null
+
             Log.i("action", "showChooseFileDialog finished with $resultCode")
             if (resultCode == RESULT_OK) {
                 val pathHelper = URIPathHelper()
@@ -183,7 +193,7 @@ class FullscreenActivity : AppCompatActivity() {
                 prevTrack = selectedFile
                 playPath(selectedFile!!)
             } else {
-                startPlayVideo()
+                    startPlayVideo()
             }
         }
     }
@@ -199,6 +209,11 @@ class FullscreenActivity : AppCompatActivity() {
 
     private fun startPlayVideo() {
         Log.i("action", "startPlayVideo: from $currentPosition play '$currentTrack'")
+        if (chooseFileIntent != null) {
+            Log.i("action", "startPlayVideo disabled as ChooseFile opened")
+            return
+        }
+
         if (!currentTrack.isNullOrBlank()) {
             try {
                 videoView.requestFocus()
@@ -338,13 +353,14 @@ class FullscreenActivity : AppCompatActivity() {
     private fun stopPlayVideo() {
         Log.i("action", "stopPlayVideo")
         lastState = STATE_STOP
-        pauseVideo()
+//        pauseVideo()
         videoView.stopPlayback()
     }
 
     override fun onStop() {
         Log.i("action", "onStop")
         pauseVideo()
+//        stopPlayVideo()
         super.onStop()
     }
 
@@ -361,7 +377,7 @@ class FullscreenActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         Log.i("action", "onNewIntent: $lastState")
-        lastState = STATE_STOP
-        resumeActivity()
+//        lastState = STATE_STOP
+//        resumeActivity()
     }
 }
