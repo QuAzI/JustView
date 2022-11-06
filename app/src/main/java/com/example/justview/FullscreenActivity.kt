@@ -27,6 +27,7 @@ class FullscreenActivity : AppCompatActivity() {
     private lateinit var videoView: VideoView
     private var currentTrack: String? = null
     private var currentPosition: Int = 0
+    private var prevTrack: String? = null
 
     private var flippingDirection: Int = 1
 
@@ -86,6 +87,11 @@ class FullscreenActivity : AppCompatActivity() {
                 Log.i("action", "onLongClick")
                 videoView.setMediaController(mediaController)
             }
+        })
+
+        videoView.setOnPreparedListener(MediaPlayer.OnPreparedListener { mediaPlayer ->
+            Log.i("action", "setOnPreparedListener")
+            prevTrack = currentTrack
         })
 
         videoView.setOnCompletionListener {
@@ -174,6 +180,7 @@ class FullscreenActivity : AppCompatActivity() {
             if (resultCode == RESULT_OK) {
                 val pathHelper = URIPathHelper()
                 val selectedFile = pathHelper.getPath(this, data?.data!!)
+                prevTrack = selectedFile
                 playPath(selectedFile!!)
             } else {
                 startPlayVideo()
@@ -239,8 +246,11 @@ class FullscreenActivity : AppCompatActivity() {
                 index = files.count() - 1
             }
 
-            playPath(currentDir + "/" + files[index]!!)
-            return true
+            val newFilePath = currentDir + "/" + files[index]!!
+            if (prevTrack != newFilePath) {
+                playPath(newFilePath)
+                return true
+            }
         }
 
         return false
@@ -342,11 +352,10 @@ class FullscreenActivity : AppCompatActivity() {
         if (videoView.isPlaying) {
             Log.i("action", "pauseVideo: at ${videoView.currentPosition}")
             currentPosition = videoView.currentPosition
+            videoView.pause()
         } else {
             Log.i("action", "pauseVideo: already paused")
         }
-
-        videoView.pause()
     }
 
     override fun onNewIntent(intent: Intent?) {
