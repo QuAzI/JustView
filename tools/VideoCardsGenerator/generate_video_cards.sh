@@ -50,10 +50,10 @@ do
 	  
 	  
       if [[ "$audio" == "$mp3" ]]; then
-        ffmpeg -loop 1 -y -i "$fullfile" -i "$audio" -c:v libx264 -preset veryslow -tune stillimage -vf scale=-2:720 -pix_fmt yuv420p -c:a copy -t $duration -vf subtitles="$subtitles" "$destfile"
+        ffmpeg -loop 1 -y -i "$fullfile" -i "$audio" -c:v libx264 -preset veryslow -tune stillimage -vf scale=-2:720,subtitles="$subtitles" -pix_fmt yuv420p -c:a copy -t $duration "$destfile"
       else
-        ffmpeg -loop 1 -y -i "$fullfile" -i "$audio" -c:v libx264 -preset veryslow -tune stillimage -vf scale=-2:720 -pix_fmt yuv420p -c:a aac -b:a 128k -filter:a "volume=2.0,atempo=1.2,adelay=1s" -t $duration -vf subtitles="$subtitles" "$destfile"
-        echo ffmpeg -loop 1 -y -i "$fullfile" -i "$audio" -c:v libx264 -preset veryslow -tune stillimage -vf scale=-2:720 -pix_fmt yuv420p -c:a aac -b:a 128k -filter:a "volume=2.0,atempo=1.2,adelay=1s" -t $duration -vf subtitles="$subtitles" "$destfile"
+        ffmpeg -loop 1 -y -i "$fullfile" -i "$audio" -c:v libx264 -preset veryslow -tune stillimage -vf scale=-2:720,subtitles="$subtitles" -pix_fmt yuv420p -c:a aac -b:a 128k -filter:a "volume=2.0,atempo=1.2,adelay=1s" -t $duration "$destfile"
+        echo ffmpeg -loop 1 -y -i "$fullfile" -i "$audio" -c:v libx264 -preset veryslow -tune stillimage -vf scale=-2:720,subtitles="$subtitles" -pix_fmt yuv420p -c:a aac -b:a 128k -filter:a "volume=2.0,atempo=1.2,adelay=1s" -t $duration "$destfile"
       fi
     fi
 done
