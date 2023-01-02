@@ -38,21 +38,22 @@ do
       fi
       echo Audio: $audio
 	  
-	  subs=""
 	  subtitles=$filename.ass
-	  if [ -f "$audio" ]; then
-		subs="-vf subtitles='$subtitles'"
+	  if [ ! -f "$subtitles" ]; then
+		  ./rec_ass_for_card.py "$filename" > "$subtitles"
 	  fi
-      
-	  duration=`ffprobe -i $audio -show_format -v quiet | sed -n 's/duration=//p'`
+
+	  duration=`ffprobe -i "$audio" -show_format -v quiet | sed -n 's/duration=//p'`
+    #echo duration raw = $duration
 	  duration=`echo "($duration + 3.5) / 1" | bc`
 	  echo duration = $duration
 	  
 	  
       if [[ "$audio" == "$mp3" ]]; then
-        ffmpeg -loop 1 -y -i "$fullfile" -i "$audio" -c:v libx264 -preset veryslow -tune stillimage -vf scale=-2:720 -pix_fmt yuv420p -c:a copy -t $duration $subs "$destfile"
+        ffmpeg -loop 1 -y -i "$fullfile" -i "$audio" -c:v libx264 -preset veryslow -tune stillimage -vf scale=-2:720 -pix_fmt yuv420p -c:a copy -t $duration -vf subtitles="$subtitles" "$destfile"
       else
-        ffmpeg -loop 1 -y -i "$fullfile" -i "$audio" -c:v libx264 -preset veryslow -tune stillimage -vf scale=-2:720 -pix_fmt yuv420p -c:a aac -b:a 128k -filter:a "volume=2.0,atempo=1.2,adelay=1s" -t $duration $subs "$destfile"
+        ffmpeg -loop 1 -y -i "$fullfile" -i "$audio" -c:v libx264 -preset veryslow -tune stillimage -vf scale=-2:720 -pix_fmt yuv420p -c:a aac -b:a 128k -filter:a "volume=2.0,atempo=1.2,adelay=1s" -t $duration -vf subtitles="$subtitles" "$destfile"
+        echo ffmpeg -loop 1 -y -i "$fullfile" -i "$audio" -c:v libx264 -preset veryslow -tune stillimage -vf scale=-2:720 -pix_fmt yuv420p -c:a aac -b:a 128k -filter:a "volume=2.0,atempo=1.2,adelay=1s" -t $duration -vf subtitles="$subtitles" "$destfile"
       fi
     fi
 done
