@@ -6,7 +6,7 @@
 mkdir ./out
 
 shopt -s nullglob
-for fullfile in *.{jpg,jpeg,png,webp} ;
+for fullfile in *.{jpg,jpeg,png,webp,avif} ;
 do
   echo Image: $fullfile
   
