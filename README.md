@@ -33,9 +33,14 @@ Samsung Note10+ - [Android 12 (API level 31)](https://developer.android.com/stud
 
 ## Installation
 
+To enable unsigned apps installation please allow installs from Unknown Sources (Security section)
+
+```
+Settings -> Application -> Unknown sources (Allow installation of non-Market applications)
+```
+
 ### Installation from Desktop
 
-Allow installs from Unknown Sources (Security section)
 Enable USB debug
 
 ```
@@ -43,17 +48,10 @@ adb devices -l
 adb -s 0123456789ABCDEF install -r ./app/build/intermediates/apk/debug/app-debug.apk
 ```
 
-or use file manager to install unsigned APK right from filesystem
 
 ### Installation from Android device
 
-Enable unsigned apps installation
-
-```
-Settings -> Application -> Unknown sources (Allow installation of non-Market applications)
-```
-
-then copy APK to device and install
+Download APK to device and use file manager to install unsigned APK right from filesystem
 
 
 ## Troubleshooting
