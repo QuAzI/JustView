@@ -3,19 +3,18 @@ package com.example.justview
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.util.Log
-import android.view.KeyEvent
-import android.view.Window
-import android.view.WindowManager
+import android.view.*
 import android.webkit.MimeTypeMap
 import android.widget.MediaController
 import android.widget.VideoView
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -31,10 +30,10 @@ class FullscreenActivity : AppCompatActivity() {
 
     private var flippingDirection: Int = 1
 
-    private val STATE_STOP : Int = 0
-    private val STATE_PLAY : Int = 1
+    private val stateStop : Int = 0
+    private val stateStart : Int = 1
 
-    private var lastState: Int = STATE_STOP
+    private var lastState: Int = stateStop
         set(value) {
             Log.i("action", "lastState = $value")
             field = value
@@ -44,14 +43,9 @@ class FullscreenActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        supportRequestWindowFeature(Window.FEATURE_NO_TITLE)
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_FULLSCREEN,
-            WindowManager.LayoutParams.FLAG_FULLSCREEN)
-        setContentView(R.layout.activity_fullscreen)
-        supportActionBar?.hide()
+        setFullScreen()
 
-        videoView = findViewById<VideoView>(R.id.videoView)
+        videoView = findViewById(R.id.videoView)
 
         val mediaController = MediaController(this)
         mediaController.setAnchorView(videoView)
@@ -89,31 +83,51 @@ class FullscreenActivity : AppCompatActivity() {
             }
         })
 
-        videoView.setOnPreparedListener(MediaPlayer.OnPreparedListener { mediaPlayer ->
+        videoView.setOnPreparedListener {
             Log.i("action", "setOnPreparedListener")
             prevTrack = currentTrack
-        })
+        }
 
         videoView.setOnCompletionListener {
             switchToNextTrackInTheDirection()
         }
 
-        videoView.setOnErrorListener(MediaPlayer.OnErrorListener { mp, what, extra ->
+        videoView.setOnErrorListener { _, _, _ ->
             Log.i("action", "File playback error: ${this.currentTrack}")
             if (!switchToNextTrackInTheDirection()) {
                 chooseFile()
             }
             true
-        })
+        }
+    }
+
+    private fun setFullScreen() {
+        supportRequestWindowFeature(Window.FEATURE_NO_TITLE)
+
+        //Set full screen after setting layout content
+        @Suppress("DEPRECATION")
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val controller = window.insetsController
+
+            if(controller != null) {
+                controller.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+                controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
+        } else {
+            window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        }
+
+        setContentView(R.layout.activity_fullscreen)
+        supportActionBar?.hide()
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun switchToNextTrackInTheDirection(): Boolean {
         if (flippingDirection >= 0) {
             return nextTrack(currentTrack)
-        } else {
-            return prevTrack(currentTrack)
         }
+
+        return prevTrack(currentTrack)
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -121,13 +135,13 @@ class FullscreenActivity : AppCompatActivity() {
         super.onPostCreate(savedInstanceState)
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), MY_READ_EXTERNAL_REQUEST)
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), readExternalRequestPermission)
         } else {
             chooseFile()
         }
     }
 
-    private val MY_READ_EXTERNAL_REQUEST : Int = 1
+    private val readExternalRequestPermission : Int = 1
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -136,7 +150,7 @@ class FullscreenActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
-            MY_READ_EXTERNAL_REQUEST -> {
+            readExternalRequestPermission -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     chooseFile()
                 } else {
@@ -146,8 +160,6 @@ class FullscreenActivity : AppCompatActivity() {
             }
         }
     }
-
-    val REQUEST_GET_FILE = 111
 
     private var chooseFileIntent: Intent? = null
 
@@ -177,29 +189,28 @@ class FullscreenActivity : AppCompatActivity() {
             }
         }
 
-        startActivityForResult(Intent.createChooser(chooseFileIntent, "Select a file"), REQUEST_GET_FILE)
+        chooseFileActivity.launch(Intent.createChooser(chooseFileIntent, "Select a file"))
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
+    private val chooseFileActivity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        onFileChooseResult(result)
+    }
 
-        if (requestCode == REQUEST_GET_FILE) {
-            chooseFileIntent = null
+    private fun onFileChooseResult(result: ActivityResult) {
+        chooseFileIntent = null
 
-            Log.i("action", "showChooseFileDialog finished with $resultCode")
-            if (resultCode == RESULT_OK) {
-                val pathHelper = URIPathHelper()
-                val selectedFile = pathHelper.getPath(this, data?.data!!)
-                prevTrack = selectedFile
-                playPath(selectedFile!!)
-            } else {
-                    startPlayVideo()
-            }
+        Log.i("action", "showChooseFileDialog finished with $result.resultCode")
+        if (result.resultCode == RESULT_OK) {
+            val pathHelper = URIPathHelper()
+            val intentData: Intent? = result.data
+            val selectedFile = pathHelper.getPath(this, intentData?.data!!)
+            prevTrack = selectedFile
+            playPath(selectedFile!!)
+        } else {
+            startPlayVideo()
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     private fun playPath(path: String) {
         Log.i("action", "Play: $path")
         stopPlayVideo()
@@ -224,7 +235,7 @@ class FullscreenActivity : AppCompatActivity() {
                     videoView.seekTo(currentPosition)
                 }
                 videoView.start()
-                lastState = STATE_PLAY
+                lastState = stateStart
                 videoView.setMediaController(null)
             } catch (ex: Exception) {
                 ex.printStackTrace()
@@ -281,7 +292,7 @@ class FullscreenActivity : AppCompatActivity() {
                 return@FileFilter mimeType.startsWith("video/")
             }
 
-            return@FileFilter false;
+            return@FileFilter false
         })
         if (files != null) {
             val result = arrayOfNulls<String>(files.size)
@@ -337,15 +348,16 @@ class FullscreenActivity : AppCompatActivity() {
         resumeActivity()
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         Log.i("action", "onBackPressed")
-        lastState = if (lastState == STATE_STOP) STATE_PLAY else STATE_STOP
+        lastState = if (lastState == stateStop) stateStart else stateStop
         resumeActivity()
     }
 
     private fun resumeActivity() {
         Log.i("action", "resumeActivity: $lastState, $currentTrack")
-        if (lastState == STATE_PLAY && !currentTrack.isNullOrEmpty()) {
+        if (lastState == stateStart && !currentTrack.isNullOrEmpty()) {
             startPlayVideo()
         } else {
             chooseFile()
@@ -354,7 +366,7 @@ class FullscreenActivity : AppCompatActivity() {
 
     private fun stopPlayVideo() {
         Log.i("action", "stopPlayVideo")
-        lastState = STATE_STOP
+        lastState = stateStop
 //        pauseVideo()
         videoView.stopPlayback()
     }
