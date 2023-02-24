@@ -22,6 +22,8 @@ Media controls show on long click: pause, rewind
 
 ## Developed and tested for
 
+Lenovo Phab Plus PB1-770M 32GB LTE [Android 5.1.1 (API Level 22) LOLLIPOP_MR1](https://developer.android.com/studio/releases/platforms#5.1)
+
 Lenovo TAB 2 A10-70F [Android 6.0 (API level 23)](https://developer.android.com/studio/releases/platforms#6.0)
 
 Lenovo Tab M10 HD 2nd Gen TB-X306X - [Android 11 (API level 30)](https://developer.android.com/studio/releases/platforms#11)

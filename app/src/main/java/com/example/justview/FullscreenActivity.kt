@@ -44,7 +44,7 @@ class FullscreenActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        requestWindowFeature(Window.FEATURE_NO_TITLE)
+        supportRequestWindowFeature(Window.FEATURE_NO_TITLE)
         window.setFlags(
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN)
@@ -107,6 +107,7 @@ class FullscreenActivity : AppCompatActivity() {
         })
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun switchToNextTrackInTheDirection(): Boolean {
         if (flippingDirection >= 0) {
             return nextTrack(currentTrack)
@@ -119,7 +120,7 @@ class FullscreenActivity : AppCompatActivity() {
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
 
-        if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), MY_READ_EXTERNAL_REQUEST)
         } else {
             chooseFile()
@@ -245,6 +246,7 @@ class FullscreenActivity : AppCompatActivity() {
         return playNextTrackInTheDirection(path, -1)
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun playNextTrackInTheDirection(path: String?, direction: Int): Boolean {
         if (path.isNullOrEmpty()) return false
 
