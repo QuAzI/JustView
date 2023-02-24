@@ -27,6 +27,8 @@ class URIPathHelper {
                     return getExternalStorageDirectory().toString() + "/" + split[1]
                 }
 
+                return "/storage/" + split[0] + "/" + split[1]
+
             } else if (isDownloadsDocument(uri)) {
                 val id = DocumentsContract.getDocumentId(uri)
                 val contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), java.lang.Long.valueOf(id))
