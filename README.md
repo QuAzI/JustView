@@ -35,6 +35,7 @@ Samsung Note10+ - [Android 12 (API level 31)](https://developer.android.com/stud
 
 ### Installation from Desktop
 
+Allow installs from Unknown Sources (Security section)
 Enable USB debug
 
 ```
