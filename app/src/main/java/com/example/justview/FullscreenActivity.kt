@@ -1,13 +1,10 @@
 package com.example.justview
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.provider.DocumentsContract
 import android.util.Log
 import android.view.*
 import android.webkit.MimeTypeMap
@@ -17,7 +14,6 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import java.io.File
 import java.io.FileFilter
 
@@ -30,10 +26,7 @@ class FullscreenActivity : AppCompatActivity() {
 
     private var flippingDirection: Int = 1
 
-    private val stateStop : Int = 0
-    private val stateStart : Int = 1
-
-    private var lastState: Int = stateStop
+    private var lastState: Int = PLAYER_STATE_STOP
         set(value) {
             Log.i("action", "lastState = $value")
             field = value
@@ -133,82 +126,50 @@ class FullscreenActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), readExternalRequestPermission)
-        } else {
-            chooseFile()
-        }
-    }
-
-    private val readExternalRequestPermission : Int = 1
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String?>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            readExternalRequestPermission -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    chooseFile()
-                } else {
-                    Log.w("Permission", "READ permission not granted")
-                }
-                return
-            }
-        }
+        chooseFile()
     }
 
     private var chooseFileIntent: Intent? = null
 
     private fun chooseFile() {
-        Log.i("action", "showChooseFileDialog")
+        Log.i("action", "chooseFile")
+        pauseVideo()
 
         if (chooseFileIntent != null) {
-            Log.i("action", "showChooseFileDialog already opened")
+            Log.i("action", "chooseFile dialog active yet")
             return
         }
 
-        pauseVideo()
-
-        val uri = Uri.parse(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).path)
-
-        chooseFileIntent = Intent(Intent.ACTION_OPEN_DOCUMENT, uri).apply {
-            data = uri
-            type = "video/*"
-
-            // Only pick openable and local files. Theoretically we could pull files from google drive
-            // or other applications that have networked files, but that's unnecessary for this case.
-            addCategory(Intent.CATEGORY_OPENABLE)
-            putExtra(Intent.EXTRA_LOCAL_ONLY, true)
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                putExtra(DocumentsContract.EXTRA_INITIAL_URI, uri)
-            }
+         chooseFileIntent = Intent(this, ChooseFileActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra(
+                "uri",
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).path
+            )
         }
 
         chooseFileActivity.launch(Intent.createChooser(chooseFileIntent, "Select a file"))
     }
 
     private val chooseFileActivity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        onFileChooseResult(result)
+        chooseFileIntent = null
+        onChooseFileResult(result)
     }
 
-    private fun onFileChooseResult(result: ActivityResult) {
-        chooseFileIntent = null
-
-        Log.i("action", "showChooseFileDialog finished with $result.resultCode")
+    private fun onChooseFileResult(result: ActivityResult) {
+        Log.i("action", "chooseFile finished with $result.resultCode")
         if (result.resultCode == RESULT_OK) {
             val pathHelper = URIPathHelper()
             val intentData: Intent? = result.data
-            val selectedFile = pathHelper.getPath(this, intentData?.data!!)
-            prevTrack = selectedFile
-            playPath(selectedFile!!)
-        } else {
-            startPlayVideo()
+            if (intentData != null && intentData.data != null) {
+                val selectedFile = pathHelper.getPath(this, intentData.data!!)
+                prevTrack = selectedFile
+                playPath(selectedFile!!)
+                return
+            }
         }
+
+        startPlayVideo()
     }
 
     private fun playPath(path: String) {
@@ -221,11 +182,6 @@ class FullscreenActivity : AppCompatActivity() {
 
     private fun startPlayVideo() {
         Log.i("action", "startPlayVideo: from $currentPosition play '$currentTrack'")
-        if (chooseFileIntent != null) {
-            Log.i("action", "startPlayVideo disabled as ChooseFile opened")
-            return
-        }
-
         if (!currentTrack.isNullOrBlank()) {
             try {
                 videoView.requestFocus()
@@ -235,7 +191,7 @@ class FullscreenActivity : AppCompatActivity() {
                     videoView.seekTo(currentPosition)
                 }
                 videoView.start()
-                lastState = stateStart
+                lastState = PLAYER_STATE_START
                 videoView.setMediaController(null)
             } catch (ex: Exception) {
                 ex.printStackTrace()
@@ -351,13 +307,13 @@ class FullscreenActivity : AppCompatActivity() {
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         Log.i("action", "onBackPressed")
-        lastState = if (lastState == stateStop) stateStart else stateStop
+        lastState = if (lastState == PLAYER_STATE_STOP) PLAYER_STATE_START else PLAYER_STATE_STOP
         resumeActivity()
     }
 
     private fun resumeActivity() {
         Log.i("action", "resumeActivity: $lastState, $currentTrack")
-        if (lastState == stateStart && !currentTrack.isNullOrEmpty()) {
+        if (lastState == PLAYER_STATE_START && !currentTrack.isNullOrEmpty()) {
             startPlayVideo()
         } else {
             chooseFile()
@@ -366,15 +322,13 @@ class FullscreenActivity : AppCompatActivity() {
 
     private fun stopPlayVideo() {
         Log.i("action", "stopPlayVideo")
-        lastState = stateStop
-//        pauseVideo()
+        lastState = PLAYER_STATE_STOP
         videoView.stopPlayback()
     }
 
     override fun onStop() {
         Log.i("action", "onStop")
         pauseVideo()
-//        stopPlayVideo()
         super.onStop()
     }
 
@@ -391,7 +345,10 @@ class FullscreenActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         Log.i("action", "onNewIntent: $lastState")
-//        lastState = STATE_STOP
-//        resumeActivity()
+    }
+
+    companion object {
+        const val PLAYER_STATE_STOP : Int = 0
+        const val PLAYER_STATE_START : Int = 1
     }
 }
