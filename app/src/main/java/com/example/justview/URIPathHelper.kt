@@ -9,6 +9,7 @@ import android.os.Environment.*
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import androidx.annotation.RequiresApi
+import java.io.File
 
 
 class URIPathHelper {
@@ -27,7 +28,13 @@ class URIPathHelper {
                     return getExternalStorageDirectory().toString() + "/" + split[1]
                 }
 
-                return "/storage/" + split[0] + "/" + split[1]
+                val sdCardFile = File("/storage/" + split[0] + "/" + split[1])
+                if (sdCardFile.exists() && sdCardFile.canRead())
+                {
+                    return sdCardFile.absolutePath
+                }
+
+                return "/storage/sdcard/" + split[1]
 
             } else if (isDownloadsDocument(uri)) {
                 val id = DocumentsContract.getDocumentId(uri)
