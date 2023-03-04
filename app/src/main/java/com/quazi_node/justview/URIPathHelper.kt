@@ -1,4 +1,4 @@
-package com.example.justview
+package com.quazi_node.justview
 
 import android.content.ContentUris
 import android.content.Context

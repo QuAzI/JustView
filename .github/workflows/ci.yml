@@ -32,7 +32,7 @@ on:
       - '.github/ISSUE_TEMPLATE/**'
 
 jobs:
-  build-and-test-jvm:
+  build:
     runs-on: ubuntu-latest
 
     permissions:
@@ -40,23 +40,23 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
       - uses: gradle/wrapper-validation-action@v1
 
-      - name: create and checkout branch
+      - name: Create and checkout branch
         # push events already checked out the branch
         if: github.event_name == 'pull_request'
         run: git checkout -B ${{ github.head_ref }}
 
-      - name: set up JDK 11
+      - name: Set up JDK 11
         uses: actions/setup-java@v3
         with:
           java-version: 11
           distribution: "temurin"
           cache: 'gradle'
           
-      - name: short sha
-        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-
       - name: Build debug APK and run jvm tests
         run: ./gradlew assembleDebug lintDebug testDebugUnitTest --stacktrace -DskipFormatKtlint
 
@@ -65,3 +65,41 @@ jobs:
         with:
           name: ${{ github.event.repository.name }}-${{ env.short_sha }}
           path: app/build/outputs/apk/debug/*.apk
+
+      - name: Short SHA
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+        
+      - name: Prev TAG
+        run: echo "prev_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+        
+      - name: New TAG
+        if: github.ref == 'refs/heads/main'
+        run: echo "tag=$(echo $prev_tag | awk -F. -v OFS=. '{$NF += 1 ; print}')" >> $GITHUB_ENV
+          
+      - name: Changelog
+        run: |
+          echo "changes<<EOF" >> $GITHUB_ENV
+          git shortlog --no-merges main --not ${{ env.prev_tag }} >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          
+      - name: create Release
+        if: github.ref == 'refs/heads/main'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          tag_name: ${{ env.tag }}
+          release_name: ${{ github.event.repository.name }} ${{ env.tag }}-${{ env.short_sha }}
+          draft: true
+          body: |
+            ${{ env.changes }}
+
+      - name: upload release assets
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/debug/*.apk
+          asset_content_type: application/octet-stream
