@@ -34,10 +34,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     permissions:
-      contents: read
-
+      contents: write
     steps:
       - uses: actions/checkout@v3
         with:
@@ -57,15 +55,6 @@ jobs:
           distribution: "temurin"
           cache: 'gradle'
           
-      - name: Build debug APK and run jvm tests
-        run: ./gradlew assembleDebug lintDebug testDebugUnitTest --stacktrace -DskipFormatKtlint
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ github.event.repository.name }}-${{ env.short_sha }}
-          path: app/build/outputs/apk/debug/*.apk
-
       - name: Short SHA
         run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
         
@@ -74,32 +63,29 @@ jobs:
         
       - name: New TAG
         if: github.ref == 'refs/heads/main'
-        run: echo "tag=$(echo $prev_tag | awk -F. -v OFS=. '{$NF += 1 ; print}')" >> $GITHUB_ENV
-          
-      - name: Changelog
         run: |
-          echo "changes<<EOF" >> $GITHUB_ENV
-          git shortlog --no-merges main --not ${{ env.prev_tag }} >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          TAG=$(git tag --points-at HEAD)
+          if [ -z "$TAG" ]; then TAG=$(echo $prev_tag | awk -F. -v OFS=. '{$NF += 1 ; print}'); fi
+          echo "tag=$TAG" >> $GITHUB_ENV
           
-      - name: create Release
-        if: github.ref == 'refs/heads/main'
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          tag_name: ${{ env.tag }}
-          release_name: ${{ github.event.repository.name }} ${{ env.tag }}-${{ env.short_sha }}
-          draft: true
-          body: |
-            ${{ env.changes }}
+      - name: Build debug APK and run jvm tests
+        run: ./gradlew assembleDebug lintDebug testDebugUnitTest --stacktrace -DskipFormatKtlint
 
-      - name: upload release assets
-        if: github.ref == 'refs/heads/main'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/debug/*.apk
-          asset_content_type: application/octet-stream
+          name: ${{ github.event.repository.name }}-${{ env.short_sha }}
+          path: app/build/outputs/apk/debug/*.apk
+
+      - name: Upload release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        if: github.ref == 'refs/heads/main'
+        run: |
+          gh release create ${{ env.tag }} \
+            --title "${{ github.event.repository.name }}-${{ env.tag }}-${{ env.short_sha }}" \
+            --generate-notes --notes-start-tag ${{ env.prev_tag }} \
+            --draft \
+            ./app/build/outputs/apk/debug/${{ github.event.repository.name }}.apk
+          git tag ${{ env.tag }}
+          git push origin ${{ env.tag }}
