@@ -61,7 +61,7 @@ jobs:
       - name: Prev TAG
         run: echo "prev_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
         
-      - name: New TAG
+      - name: Actual TAG
         if: github.ref == 'refs/heads/main'
         run: |
           TAG=$(git tag --points-at HEAD)
@@ -84,8 +84,6 @@ jobs:
         run: |
           gh release create ${{ env.tag }} \
             --title "${{ github.event.repository.name }}-${{ env.tag }}-${{ env.short_sha }}" \
+            --target ${{ github.sha }} \
             --generate-notes --notes-start-tag ${{ env.prev_tag }} \
-            --draft \
-            ./app/build/outputs/apk/debug/${{ github.event.repository.name }}.apk
-          git tag ${{ env.tag }}
-          git push origin ${{ env.tag }}
+            ./app/build/outputs/apk/debug/*.apk
