@@ -92,6 +92,19 @@ class FullscreenActivity : AppCompatActivity() {
             }
             true
         }
+
+        playSelectedFileIfPresent(intent)
+    }
+
+    private fun playSelectedFileIfPresent(intent: Intent?) {
+        if (intent != null && Intent.ACTION_VIEW == intent.action) {
+            Log.i("action", "action view!!!")
+            Log.i("action", intent.dataString!!)
+            val pathHelper = URIPathHelper()
+            val selectedFile = pathHelper.getPath(this, intent.data!!)
+            prevTrack = selectedFile
+            playPath(selectedFile!!)
+        }
     }
 
     private fun setFullScreen() {
@@ -126,7 +139,9 @@ class FullscreenActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
-        chooseFile()
+        if (currentTrack == null) {
+            chooseFile()
+        }
     }
 
     private var chooseFileIntent: Intent? = null
@@ -345,6 +360,7 @@ class FullscreenActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         Log.i("action", "onNewIntent: $lastState")
+        playSelectedFileIfPresent(intent)
     }
 
     companion object {
