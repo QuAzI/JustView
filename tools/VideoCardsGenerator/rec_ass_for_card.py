@@ -2,6 +2,7 @@
 
 import sys
 from string import Template
+import pyphen
 
 template = Template("""[Script Info]
 Title: ${filename}
@@ -20,6 +21,16 @@ Style: Default,DejaVu Sans Mono,96,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,${subtitle}
 """)
+
+
+def split_words_into_syllables(sentence):
+    dic = pyphen.Pyphen(lang='ru')  # выбираем русский язык
+    words = sentence.split()  # разбиваем предложение на слова
+    result = []
+    for word in words:
+        syllables = dic.inserted(word, hyphen='{\\fscx25}\u202f{\\r}')  # получаем список слогов для каждого слова
+        result.append(syllables)
+    return ' '.join(result)
 
 
 def colorify(text: str) -> str:
@@ -53,6 +64,6 @@ if __name__ == "__main__":
     text = sys.argv[1]
     d = {
         'filename': text,
-        'subtitle': colorify(text)
+        'subtitle': colorify(split_words_into_syllables(text))
     }
     print(template.safe_substitute(d))
