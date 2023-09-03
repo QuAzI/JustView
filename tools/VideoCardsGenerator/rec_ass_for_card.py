@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
-import sys
+import sys, os
 from string import Template
 import pyphen
+
 
 template = Template("""[Script Info]
 Title: ${filename}
@@ -66,4 +67,6 @@ if __name__ == "__main__":
         'filename': text,
         'subtitle': colorify(split_words_into_syllables(text))
     }
-    print(template.safe_substitute(d))
+
+    result = template.safe_substitute(d)
+    os.write(1, bytes(result, 'utf-8'))

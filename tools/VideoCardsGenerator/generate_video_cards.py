@@ -4,6 +4,7 @@ import sys
 import subprocess
 from gtts import gTTS
 
+
 def generate_audio(filename):    
     wav = f"{filename}.wav"
     mp3 = f"{filename}.mp3"
@@ -46,11 +47,13 @@ def get_duration(video_file: str, audio_file: str) -> float:
 
 def generate_subtitles(filename):
     subtitles = f"{filename}.ass"
+
     if not os.path.exists(subtitles) or os.stat(subtitles).st_size == 0:
-        # rec_ass_for_card.py
         subprocess.run([sys.executable, "./rec_ass_for_card.py", filename], 
-                       stdout=open(subtitles, "w"), 
-                       check=True)
+                       stdout=open(subtitles, "w", encoding="utf-8"),
+                       check=True, 
+                       encoding='utf-8')        
+
     return subtitles
 
 def generate_video(fullfile, duration, audio, subtitles, destfile):
@@ -108,5 +111,3 @@ if __name__ == "__main__":
     for fullfile in os.listdir("."):
         if fullfile.lower().endswith(supported_extensions):
             convert_file(fullfile)
-
-        
