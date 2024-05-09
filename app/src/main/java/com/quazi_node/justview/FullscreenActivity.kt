@@ -32,7 +32,6 @@ class FullscreenActivity : AppCompatActivity() {
             field = value
         }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -110,6 +109,8 @@ class FullscreenActivity : AppCompatActivity() {
     private fun setFullScreen() {
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE)
 
+        setContentView(R.layout.activity_fullscreen)
+
         //Set full screen after setting layout content
         @Suppress("DEPRECATION")
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -123,11 +124,9 @@ class FullscreenActivity : AppCompatActivity() {
             window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
         }
 
-        setContentView(R.layout.activity_fullscreen)
         supportActionBar?.hide()
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     private fun switchToNextTrackInTheDirection(): Boolean {
         if (flippingDirection >= 0) {
             return nextTrack(currentTrack)
@@ -136,7 +135,6 @@ class FullscreenActivity : AppCompatActivity() {
         return prevTrack(currentTrack)
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
         if (currentTrack == null) {
@@ -216,19 +214,16 @@ class FullscreenActivity : AppCompatActivity() {
         supportActionBar?.hide()
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     private fun nextTrack(path: String?): Boolean {
         Log.i("action", "nextTrack $path")
         return playNextTrackInTheDirection(path, 1)
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     private fun prevTrack(path: String?): Boolean {
         Log.i("action", "prevTrack $path")
         return playNextTrackInTheDirection(path, -1)
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     private fun playNextTrackInTheDirection(path: String?, direction: Int): Boolean {
         if (path.isNullOrEmpty()) return false
 
@@ -276,7 +271,6 @@ class FullscreenActivity : AppCompatActivity() {
         return arrayOfNulls(0)
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
         if (event?.action == KeyEvent.ACTION_DOWN) {
 //            if (event.keyCode == KeyEvent.KEYCODE_BACK) {
