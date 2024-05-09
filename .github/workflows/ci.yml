@@ -65,11 +65,21 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           TAG=$(git tag --points-at HEAD)
-          if [ -z "$TAG" ]; then TAG=$(echo $prev_tag | awk -F. -v OFS=. '{$NF += 1 ; print}'); fi
+          if [ -z "$TAG" ]; then 
+            TAG=$(echo $prev_tag | awk -F. -v OFS=. '{$NF += 1 ; print}');
+          fi
+          
           echo "tag=$TAG" >> $GITHUB_ENV
           
+          major=`echo $TAG | cut -d. -f1 | grep -o '[0-9]\+'`
+          minor=`echo $TAG | cut -d. -f2 | grep -o '[0-9]\+'`
+          revision=`echo $TAG | cut -d. -f3 | grep -o '[0-9]\+'`
+          
+          echo "VERSION_NAME=$major.$minor" >> gradle.properties
+          echo "VERSION_CODE=$revision" >> gradle.properties
+          
       - name: Build debug APK and run jvm tests
-        run: ./gradlew assembleDebug lintDebug testDebugUnitTest --stacktrace -DskipFormatKtlint -Pandroid.injected.version.code=$CI_PIPELINE_IID
+        run: ./gradlew assembleDebug lintDebug testDebugUnitTest --stacktrace -DskipFormatKtlint
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3

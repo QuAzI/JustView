@@ -14,8 +14,11 @@ android {
         versionCode 1
         versionName "1.0"
 
+        versionName project.VERSION_NAME
+        versionCode project.VERSION_CODE.toInteger()
+
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        setProperty("archivesBaseName", "JustView")
+        setProperty("archivesBaseName", "JustView-v$versionName.$versionCode")
     }
 
     buildTypes {
