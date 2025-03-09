@@ -82,7 +82,7 @@ jobs:
         run: ./gradlew assembleDebug lintDebug testDebugUnitTest --stacktrace -DskipFormatKtlint
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ github.event.repository.name }}-${{ env.short_sha }}
           path: app/build/outputs/apk/debug/*.apk
@@ -93,7 +93,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           gh release create ${{ env.tag }} \
-            --title "${{ github.event.repository.name }}-${{ env.tag }}-${{ env.short_sha }}" \
+            --title "${{ github.event.repository.name }} ${{ env.tag }}" \
             --target ${{ github.sha }} \
             --generate-notes --notes-start-tag ${{ env.prev_tag }} \
             ./app/build/outputs/apk/debug/*.apk
