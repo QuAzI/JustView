@@ -27,8 +27,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
 		applicationVariants.all { variant ->                              
-			variant.outputs.all {
-				outputFileName = "${archivesBaseName}.apk";
+			variant.outputs.all { output ->
+                def commitHash = System.getenv("COMMIT_SHORT_SHA")
+                        ?: System.getenv("GITHUB_SHA")?.substring(0, 7)
+                        ?: "dev"
+
+                outputFileName = "${archivesBaseName}-${commitHash}.apk"
 			}                                                             
 		}
     }
