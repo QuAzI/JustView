@@ -1,10 +1,13 @@
 package com.quazi_node.justview
 
+import android.content.ContentUris
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
 import android.view.*
 import android.webkit.MimeTypeMap
@@ -179,10 +182,51 @@ class FullscreenActivity : AppCompatActivity() {
                 prevTrack = selectedFile
                 playPath(selectedFile!!)
                 return
+            } else {
+                // Restricted mode
+                // For example, Samsung Kids doesn't allow to use ACTION_OPEN_DOCUMENT or ACTION_GET_CONTENT intents
+                // ACTION_PICK also useless in restricted mode
+
+                val videos = getVideoFiles(this)
+                if (videos.any()) {
+                    val selectedFile = pathHelper.getPath(this, videos[0].second)
+                    prevTrack = selectedFile
+                    playPath(selectedFile!!)
+                    return
+                }
             }
         }
 
         startPlayVideo()
+    }
+
+    fun getVideoFiles(context: Context): List<Pair<String, Uri>> {
+        val videoList = mutableListOf<Pair<String, Uri>>()
+
+        val projection = arrayOf(
+            MediaStore.Video.Media._ID,
+            MediaStore.Video.Media.DISPLAY_NAME
+        )
+
+        val contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+
+        val selection = "${MediaStore.Video.Media.RELATIVE_PATH} LIKE ?"
+        val selectionArgs = arrayOf("Movies/%")
+
+        context.contentResolver.query(contentUri, projection, selection, selectionArgs, null)?.use { cursor ->
+            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
+            val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
+
+            while (cursor.moveToNext()) {
+                val id = cursor.getLong(idColumn)
+                val name = cursor.getString(nameColumn)
+                val uri = ContentUris.withAppendedId(contentUri, id)
+
+                videoList.add(name to uri)
+            }
+        }
+
+        return videoList
     }
 
     private fun playPath(path: String) {
