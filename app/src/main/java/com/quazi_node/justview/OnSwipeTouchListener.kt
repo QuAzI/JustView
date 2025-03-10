@@ -32,6 +32,7 @@ internal open class OnSwipeTouchListener(c: Context?) :
             onLongClick()
             super.onLongPress(e)
         }
+        @Suppress("NOTHING_TO_OVERRIDE", "ACCIDENTAL_OVERRIDE")
         override fun onFling(
             e1: MotionEvent,
             e2: MotionEvent,

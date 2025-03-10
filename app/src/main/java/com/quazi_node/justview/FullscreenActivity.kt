@@ -271,8 +271,8 @@ class FullscreenActivity : AppCompatActivity() {
         return arrayOfNulls(0)
     }
 
-    override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
-        if (event?.action == KeyEvent.ACTION_DOWN) {
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_DOWN) {
 //            if (event.keyCode == KeyEvent.KEYCODE_BACK) {
 //                videoView.stopPlayback()
 //                showChooseFileDialog()
@@ -315,6 +315,7 @@ class FullscreenActivity : AppCompatActivity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
+        super.onBackPressed()
         Log.i("action", "onBackPressed")
         lastState = if (lastState == PLAYER_STATE_STOP) PLAYER_STATE_START else PLAYER_STATE_STOP
         resumeActivity()
