@@ -164,7 +164,7 @@ class FullscreenActivity : AppCompatActivity() {
             )
         }
 
-        chooseFileActivity.launch(Intent.createChooser(chooseFileIntent, "Select a file"))
+        chooseFileActivity.launch(chooseFileIntent)
     }
 
     private val chooseFileActivity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -200,7 +200,7 @@ class FullscreenActivity : AppCompatActivity() {
         startPlayVideo()
     }
 
-    fun getVideoFiles(context: Context): List<Pair<String, Uri>> {
+    private fun getVideoFiles(context: Context): List<Pair<String, Uri>> {
         val videoList = mutableListOf<Pair<String, Uri>>()
 
         val projection = arrayOf(
